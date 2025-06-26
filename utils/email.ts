@@ -18,7 +18,24 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
  * @param {string} params.ticketCode Ticket confirmation code
  * @returns {Promise} Promise resolving to SendGrid response
  */
-const sendRegistrationConfirmation = async (params) => {
+interface RegistrationConfirmationParams {
+  to: string;
+  name: string;
+  eventTitle: string;
+  eventDate: string;
+  eventLocation?: string;
+  ticketCode: string;
+}
+
+interface SendRegistrationConfirmationResult {
+  success: boolean;
+  response?: any;
+  error?: any;
+}
+
+const sendRegistrationConfirmation = async (
+  params: RegistrationConfirmationParams
+): Promise<SendRegistrationConfirmationResult> => {
   // console.log(`Preparing to send email to ${params.to}`);
   // console.log(
   //   `Using from address: ${
@@ -75,9 +92,11 @@ const sendRegistrationConfirmation = async (params) => {
     const response = await sgMail.send(msg);
     console.log("SendGrid API response status:", response[0].statusCode);
     return { success: true, response };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Email sending failed:", error);
-    if (error.response) {
+    if (typeof error === "object" && error !== null && "response" in error) {
+      // TypeScript now knows error has a 'response' property
+      // @ts-expect-error: error.response may not be typed, but we want to log it
       console.error(error.response.body);
     }
     return { success: false, error };
